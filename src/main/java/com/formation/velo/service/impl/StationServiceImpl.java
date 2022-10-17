@@ -1,44 +1,100 @@
 package com.formation.velo.service.impl;
 
-import com.formation.velo.model.User;
-import com.formation.velo.repository.UserRepository;
-import com.formation.velo.service.UserService;
+import com.formation.velo.api.client.OpenDataNantesClient;
+import com.formation.velo.api.OpenData;
+import com.formation.velo.model.Station;
+import com.formation.velo.repository.StationRepository;
+import com.formation.velo.service.StationService;
 import org.springframework.stereotype.Service;
+import retrofit2.Call;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 @Service
-public class UserServiceImpl implements UserService {
+public class StationServiceImpl implements StationService {
 
-    private final UserRepository userRepository;
+    private final StationRepository stationRepository;
 
-    public UserServiceImpl(UserRepository repository) {
-        this.userRepository = repository;
+    public StationServiceImpl(StationRepository repository) {
+        this.stationRepository = repository;
     }
 
     @Override
-    public List<User> findAll() {
-        return userRepository.findAll();
+    public List<Station> findAll() {
+        return stationRepository.findAll();
     }
 
     @Override
-    public Optional<User> findById(Integer id) {
-        return userRepository.findById(id);
+    public Optional<Station> findById(Integer id) {
+        return stationRepository.findById(id);
     }
 
     @Override
-    public User save(User user) {
-        return userRepository.save(user);
+    public Station save(Station station) {
+        return stationRepository.save(station);
     }
 
     @Override
     public void deleteById(Integer id) {
-        userRepository.deleteById(id);
+        stationRepository.deleteById(id);
     }
 
     @Override
-    public void delete(User user) {
-        userRepository.delete(user);
+    public void delete(Station station) {
+        stationRepository.delete(station);
+    }
+
+    @Override
+    public void saveRecords(){
+        String baseUrl = "https://data.nantesmetropole.fr/";
+        Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrl)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        OpenDataNantesClient client = retrofit.create(OpenDataNantesClient.class);
+         Call<OpenData> openDataVeloNantesCall = client.getRecord();
+
+         try{
+             OpenData openDataVeloNantes = openDataVeloNantesCall.execute().body();
+
+             Arrays.stream(openDataVeloNantes.getRecords()).forEach(record -> {
+                 Optional<Station> station = findByRecordId(record.getRecordId());
+                 if(station.isPresent()) {
+                     station.get().setAvailableBikeStands(record.getField().getAvailableBikeStands());
+                     station.get().setAvailableBikes(record.getField().getAvailableBikes());
+                     station.get().setBikeStands(record.getField().getBikeStands());
+                     station.get().setLongitude(record.getField().getPosition()[1]);
+                     station.get().setLattitude(record.getField().getPosition()[0]);
+
+                     save(station.get());
+                 } else {
+                     Station newStation = Station.builder()
+                             .recordId(record.getRecordId())
+                             .name(record.getField().getName())
+                             .address(record.getField().getAddress())
+                             .status(record.getField().getStatus())
+                             .longitude(record.getField().getPosition()[0])
+                             .lattitude(record.getField().getPosition()[1])
+                             .availableBikes(record.getField().getAvailableBikes())
+                             .availableBikeStands(record.getField().getAvailableBikeStands())
+                             .bikeStands(record.getField().getBikeStands())
+                             .build();
+
+                     save(newStation);
+                 }
+             });
+         }
+         catch (IOException e){
+             throw new RuntimeException();
+        }
+
+    }
+
+    public Optional<Station> findByRecordId(String recordId){
+        return stationRepository.findByRecordId(recordId);
     }
 }

@@ -27,6 +27,8 @@ public class Station {
 
     private String status;
 
+    private String address;
+
     private Integer bikeStands;
 
     private Integer availableBikes;

@@ -1,45 +1,42 @@
-package com.formation.velo.api.client.pump;
+package com.formation.velo.model;
 
-import com.fasterxml.jackson.annotation.*;
-import com.google.gson.annotations.SerializedName;
+import lombok.*;
 
-import java.time.OffsetDateTime;
+import javax.persistence.*;
+import java.io.Serializable;
 import java.util.Date;
-
-public class Fields {
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@Entity
+@Table(name = "pumps")
+public class Pump implements Serializable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
     private String ville;
     private String pop;
-    @SerializedName("reg_name")
     private String regName;
-    @SerializedName("com_arm_code")
     private String comArmCode;
-    @SerializedName("dep_name")
     private String depName;
-    @SerializedName("prix_nom")
     private String prixNom;
-    @SerializedName("com_code")
     private String comCode;
-    @SerializedName("epci_name")
     private String epciName;
     private String depCode;
-    @SerializedName("prix_id")
     private String prixID;
-    @SerializedName("services_service")
     private String servicesService;
     private String horairesAutomate24_24;
     private String comArmName;
-    @SerializedName("prix_maj")
     private Date prixMaj;
-    private String id;
-    @SerializedName("reg_code")
     private String regCode;
+    private String pumpId;
     private String adresse;
-    private double[] geom;
-    @SerializedName("epci_code")
+    private Double lattitude;
+    private Double longitude;
     private String epciCode;
     private String cp;
-    @SerializedName("prix_valeur")
     private double prixValeur;
-    @SerializedName("com_name")
     private String comName;
 }
